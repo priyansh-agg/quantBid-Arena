@@ -8,8 +8,8 @@ interface BiddingPanelProps {
   question: Question;
   teams: Team[];
   bids: Bid[];
-  onBid: (teamId: number, amount: number) => Promise<void>;
-  onEndAuction: () => Promise<void>;
+  onBid: (teamId: number, amount: number) => Promise<unknown>;
+  onEndAuction: () => Promise<unknown>;
   busy: boolean;
 }
 

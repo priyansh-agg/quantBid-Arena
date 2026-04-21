@@ -6,14 +6,14 @@ import type { Question, Team } from "@/types";
 interface AdminControlsProps {
   question: Question | null;
   teams: Team[];
-  onStartAuction: () => Promise<void>;
-  onEndAuction: () => Promise<void>;
-  onReAuction: () => Promise<void>;
-  onCloseQuestion: () => Promise<void>;
-  onSolve: (correct: boolean) => Promise<void>;
-  onModifyTimer: (seconds: number) => Promise<void>;
-  onConvertRP: (teamId: number) => Promise<void>;
-  onPenalize: (teamId: number) => Promise<void>;
+  onStartAuction: () => Promise<unknown>;
+  onEndAuction: () => Promise<unknown>;
+  onReAuction: () => Promise<unknown>;
+  onCloseQuestion: () => Promise<unknown>;
+  onSolve: (correct: boolean) => Promise<unknown>;
+  onModifyTimer: (seconds: number) => Promise<unknown>;
+  onConvertRP: (teamId: number) => Promise<unknown>;
+  onPenalize: (teamId: number) => Promise<unknown>;
   busy: boolean;
 }
 

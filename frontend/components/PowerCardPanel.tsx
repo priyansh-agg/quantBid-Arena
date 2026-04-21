@@ -6,8 +6,8 @@ interface PowerCardPanelProps {
   question: Question;
   teams: Team[];
   powerCards: PowerCard[];
-  onExtraTime: (teamId: number) => Promise<void>;
-  onDoubleReward: (teamId: number) => Promise<void>;
+  onExtraTime: (teamId: number) => Promise<unknown>;
+  onDoubleReward: (teamId: number) => Promise<unknown>;
   busy: boolean;
 }
 
