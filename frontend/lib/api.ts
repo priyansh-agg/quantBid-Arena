@@ -120,3 +120,22 @@ export async function fetchGameState(): Promise<GameState> {
   ]);
   return { questions, teams, bids: [], power_cards };
 }
+
+// ── Phase control (HTTP fallback for host panel) ──────────
+export const setPhaseTransition = (meme_text?: string): Promise<{ phase: string; meme_text: string; current_question_id: number | null }> =>
+  apiFetch("/api/phase/transition", {
+    method: "POST",
+    body: JSON.stringify({ meme_text: meme_text ?? null }),
+  });
+
+export const setPhaseQuestion = (): Promise<{ phase: string; meme_text: string; current_question_id: number | null }> =>
+  apiFetch("/api/phase/question", { method: "POST", body: "{}" });
+
+export const getPhase = (): Promise<{ phase: string; meme_text: string; current_question_id: number | null }> =>
+  apiFetch("/api/phase");
+
+export const setCurrentQuestion = (question_id: number | null): Promise<{ phase: string; meme_text: string; current_question_id: number | null }> =>
+  apiFetch("/api/phase/set-question", {
+    method: "POST",
+    body: JSON.stringify({ question_id }),
+  });

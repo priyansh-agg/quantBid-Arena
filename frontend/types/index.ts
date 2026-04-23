@@ -71,4 +71,6 @@ export type GameState = {
   teams: Team[];
   bids: Bid[];
   power_cards: PowerCard[];
+  current_question_id?: number | null;  // server-pinned active question
+  phase?: string;
 };

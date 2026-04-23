@@ -1,22 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import QuizBoard from "@/components/QuizBoard";
 
+// /auction is kept for backward compatibility.
+// It simply redirects to /host.
 export default function AuctionPage() {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem("auth") === "true") {
-      setAuthorized(true);
-    } else {
-      router.push("/");
-    }
+    router.replace("/host");
   }, [router]);
 
-  if (!authorized) return null; // Avoid flashing content before redirect
-
-  return <QuizBoard />;
+  return null;
 }

@@ -73,6 +73,8 @@ async def set_question_usage(question_id: int, payload: QuestionUsageUpdateIn) -
 
 # ──────────────────────────────────────────────────────────
 # Start Auction  AVAILABLE → BIDDING
+# Enforces single-active-question: resets any currently open
+# question before starting the new one.
 # ──────────────────────────────────────────────────────────
 
 @router.post("/{question_id}/start-auction", response_model=QuestionOut)
@@ -86,6 +88,37 @@ async def start_auction(question_id: int) -> QuestionOut:
                    "Question must be AVAILABLE.",
         )
 
+    # ── ENFORCE SINGLE ACTIVE QUESTION ─────────────────────
+    # Close any question currently in BIDDING or SOLVING state.
+    # This prevents multiple active questions from co-existing.
+    try:
+        active_resp = (
+            supabase.table("questions")
+            .select("id, status")
+            .in_("status", ["BIDDING", "SOLVING"])
+            .neq("id", question_id)
+            .execute()
+        )
+        for row in (active_resp.data or []):
+            prev_id = row["id"]
+            prev_status = row.get("status")
+            # Reset back to AVAILABLE cleanly
+            reset_payload: dict = {
+                "status": "AVAILABLE",
+                "current_bid_amount": None,
+                "current_bid_team_id": None,
+                "assigned_team_id": None,
+                "solve_started_at": None,
+                "active_time_seconds": None,
+                "double_reward_team_id": None,
+            }
+            supabase.table("questions").update(reset_payload).eq("id", prev_id).execute()
+            # Clear stale bids for the reset question
+            supabase.table("bids").delete().eq("question_id", prev_id).execute()
+    except Exception:
+        pass  # Non-fatal — continue to start the new auction
+
+    # ── START THE NEW AUCTION ───────────────────────────────
     base = int(q.get("base_amount") or 0)
     tl = int(q.get("time_limit_seconds") or 30)
 
@@ -111,14 +144,20 @@ async def start_auction(question_id: int) -> QuestionOut:
     if not rows:
         raise HTTPException(status_code=500, detail="Start auction returned no rows.")
 
-    # Clear any stale bids from previous rounds
+    # Clear any stale bids from previous rounds of this question
     try:
         supabase.table("bids").delete().eq("question_id", question_id).execute()
     except Exception:
         pass
 
+    # ── PIN AS CURRENT QUESTION (single source of truth) ───
+    # Automatically reveal this question on the arena and switch phase.
+    manager.set_current_question(question_id)
+    manager.set_phase("QUESTION")
+
     await manager.broadcast(fetch_full_state())
     return normalize_question(rows[0])
+
 
 
 # ──────────────────────────────────────────────────────────

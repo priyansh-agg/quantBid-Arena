@@ -10,6 +10,9 @@ import {
   penalizeTeam,
   placeBid,
   resetGame,
+  setCurrentQuestion,
+  setPhaseQuestion,
+  setPhaseTransition,
   solveQuestion,
   startAuction,
   triggerReAuction,
@@ -151,7 +154,13 @@ export default function QuizBoard() {
     setLoading(false);
 
     setSelectedId((prev) => {
+      // 1. Server has pinned a question — always respect it
+      if (state.current_question_id != null) {
+        return state.current_question_id;
+      }
+      // 2. Host has manually selected a question that still exists — keep it
       if (prev != null && state.questions.some((q) => q.id === prev)) return prev;
+      // 3. Fallback: pick the first BIDDING/SOLVING question
       const active = state.questions.find((q) =>
         ["BIDDING", "SOLVING", "FAILED"].includes(q.status)
       );
@@ -170,7 +179,7 @@ export default function QuizBoard() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const connectionStatus = useGameWebSocket(handleState);
+  const { connectionStatus } = useGameWebSocket(handleState);
 
   // ── Live timer ──────────────────────────────────────────
   const prevSolvedRef = useRef(0);
@@ -193,13 +202,17 @@ export default function QuizBoard() {
 
   const handleSelectQuestion = (id: number) => {
     if (id === selectedId || isTransitioning) return;
+    // Local host UI transition (3s cinematic)
     setIsTransitioning(true);
-    setLeftSidebarOpen(false); // Close sidebar for clean transition
+    setLeftSidebarOpen(false);
     setLoadingText(MEME_TEXTS[Math.floor(Math.random() * MEME_TEXTS.length)]);
     setTimeout(() => {
       setSelectedId(id);
       setIsTransitioning(false);
     }, 3000);
+    // Pin this question as the arena's single source of truth
+    // (fire-and-forget — the host UI transitions independently)
+    setCurrentQuestion(id).catch(() => {/* non-critical */});
   };
 
   const handleReset = async () => {
@@ -208,6 +221,14 @@ export default function QuizBoard() {
     );
     if (!confirmed) return;
     await act("Game reset — all questions and teams are fresh", () => resetGame());
+  };
+
+  const handleShowTransition = async () => {
+    await act("Arena → Transition screen", () => setPhaseTransition());
+  };
+
+  const handleRevealQuestion = async () => {
+    await act("Arena → Question revealed", () => setPhaseQuestion());
   };
 
   // Auto-dismiss notifications after 4s
@@ -304,6 +325,27 @@ export default function QuizBoard() {
           </div>
         </div>
         <div className="header-right">
+          {/* ── Phase Controls ── */}
+          <div className="phase-controls">
+            <button
+              type="button"
+              className="btn-phase-transition"
+              disabled={busy}
+              onClick={handleShowTransition}
+              title="Show transition (meme) screen on participant display"
+            >
+              ⏸ Transition Screen
+            </button>
+            <button
+              type="button"
+              className="btn-phase-question"
+              disabled={busy}
+              onClick={handleRevealQuestion}
+              title="Reveal the current question on participant display"
+            >
+              ▶ Reveal Question
+            </button>
+          </div>
           <button
             type="button"
             className="btn-reset-game"

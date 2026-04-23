@@ -190,6 +190,10 @@ async def end_auction(question_id: int) -> QuestionOut:
     if not rows:
         raise HTTPException(status_code=500, detail="Question update returned no rows.")
 
+    # Keep the arena pointing at this question through the SOLVING phase
+    manager.set_current_question(question_id)
+    manager.set_phase("QUESTION")
+
     await manager.broadcast(fetch_full_state())
     return normalize_question(rows[0])
 
@@ -273,6 +277,10 @@ async def trigger_re_auction(question_id: int) -> QuestionOut:
     rows = q_resp.data or []
     if not rows:
         raise HTTPException(status_code=500, detail="Re-auction update returned no rows.")
+
+    # Re-auction restarts this question as active
+    manager.set_current_question(question_id)
+    manager.set_phase("QUESTION")
 
     await manager.broadcast(fetch_full_state())
     return normalize_question(rows[0])

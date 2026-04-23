@@ -202,12 +202,16 @@ def fetch_full_state() -> dict:
     except Exception:
         power_cards = []
 
+    from app.game_state import manager as _mgr  # local import to avoid circular
     return {
         "type": "state",
         "questions": questions,
         "teams": teams,
         "bids": bids,
         "power_cards": power_cards,
+        "phase": _mgr.phase,
+        "meme_text": _mgr.meme_text,
+        "current_question_id": _mgr.current_question_id,
     }
 
 
