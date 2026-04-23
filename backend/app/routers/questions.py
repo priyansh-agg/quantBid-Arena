@@ -11,6 +11,7 @@ Endpoints:
 
 from __future__ import annotations
 
+import asyncio
 from fastapi import APIRouter, HTTPException, status
 
 from app.game_state import manager
@@ -151,9 +152,9 @@ async def start_auction(question_id: int) -> QuestionOut:
         pass
 
     # ── PIN AS CURRENT QUESTION (single source of truth) ───
-    # Automatically reveal this question on the arena and switch phase.
+    # Update the pinned question ID but do NOT change the arena phase.
+    # Phase only changes when host explicitly clicks "Reveal Question".
     manager.set_current_question(question_id)
-    manager.set_phase("QUESTION")
 
     await manager.broadcast(fetch_full_state())
     return normalize_question(rows[0])
@@ -246,7 +247,45 @@ async def solve_question(question_id: int, payload: SolveIn) -> QuestionOut:
     if not rows:
         raise HTTPException(status_code=500, detail="Solve update returned no rows.")
 
-    await manager.broadcast(fetch_full_state())
+    if payload.correct:
+        # ── WINNER PHASE ────────────────────────────────────────
+        # Show winner screen for 3.5s, then auto-transition to meme screen.
+        winner_team = get_team_or_404(int(winning_team_id))
+        manager.set_winner(
+            team_name=str(winner_team.get("name") or "Unknown"),
+            team_color=str(winner_team.get("color") or "#C9A857"),
+            question_id=question_id,
+        )
+        await manager.broadcast(fetch_full_state())
+
+        async def _auto_transition() -> None:
+            """After 3.5 s, move arena to transition screen automatically."""
+            await asyncio.sleep(3.5)
+            # Only auto-transition if we're still in WINNER phase (guard against re-trigger)
+            if manager.phase == "WINNER":
+                manager.set_phase("TRANSITION")
+                await manager.broadcast(manager.build_phase_message())
+
+        asyncio.create_task(_auto_transition())
+    else:
+        # ── WRONG PHASE ──────────────────────────────────────────
+        # Show wrong-answer screen for 2.5s, then auto-transition to meme screen.
+        wrong_team = get_team_or_404(int(winning_team_id))
+        manager.set_wrong(
+            team_name=str(wrong_team.get("name") or "Unknown"),
+            team_color=str(wrong_team.get("color") or "#E05555"),
+            question_id=question_id,
+        )
+        await manager.broadcast(fetch_full_state())
+
+        async def _auto_transition_wrong() -> None:
+            await asyncio.sleep(2.5)
+            if manager.phase == "WRONG":
+                manager.set_phase("TRANSITION")
+                await manager.broadcast(manager.build_phase_message())
+
+        asyncio.create_task(_auto_transition_wrong())
+
     return normalize_question(rows[0])
 
 

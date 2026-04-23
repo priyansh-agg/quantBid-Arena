@@ -70,9 +70,10 @@ export default function ArenaView() {
   const [timerSeconds, setTimerSeconds] = useState(0);
 
   // ── Phase state (server-driven) ──────────────────────────
-  const [phase, setPhase] = useState<"QUESTION" | "TRANSITION">("QUESTION");
+  const [phase, setPhase] = useState<"QUESTION" | "TRANSITION" | "WINNER" | "WRONG">("QUESTION");
   const [memeText, setMemeText] = useState("INITIALIZING ARENA");
   const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(null);
+  const [winnerInfo, setWinnerInfo] = useState<{ team_name?: string; team_color?: string; question_id?: number }>({});
 
   // Single source of truth: use server-pinned question id.
   // Fallback to status-scanning only when host hasn't pinned one yet.
@@ -115,8 +116,8 @@ export default function ArenaView() {
   const handlePhase = useCallback((ps: PhaseState) => {
     setPhase(ps.phase);
     setMemeText(ps.meme_text);
-    // Sync the server-pinned question id (may be null if host hasn't set one)
     setCurrentQuestionId(ps.current_question_id);
+    setWinnerInfo(ps.winner_info ?? {});
   }, []);
 
   useGameWebSocket(handleState, handlePhase);
@@ -147,6 +148,118 @@ export default function ArenaView() {
           <div className="spinner" />
           <p className="meme-text">CONNECTING TO ARENA_</p>
         </div>
+      </div>
+    );
+  }
+
+  // WINNER phase — correct answer celebration
+  if (phase === "WINNER") {
+    const tColor = winnerInfo.team_color ?? "#C9A857";
+    return (
+      <div className="arena-shell arena-shell--winner">
+        <div className="ambient-grid" />
+        <div className="math-bg" aria-hidden="true">
+          <span>∫ e^x dx = e^x + C</span>
+          <span>E = mc²</span>
+          <span>∑ (1/n²) = π²/6</span>
+          <span>e^(iπ) + 1 = 0</span>
+        </div>
+
+        <div className="arena-winner-screen">
+          {/* Celebration rings */}
+          <div className="winner-rings" aria-hidden="true">
+            <div className="winner-ring winner-ring-1" style={{ borderColor: tColor }} />
+            <div className="winner-ring winner-ring-2" style={{ borderColor: tColor }} />
+            <div className="winner-ring winner-ring-3" style={{ borderColor: tColor }} />
+          </div>
+
+          <div className="winner-content">
+            <p className="winner-eyebrow">CORRECT ANSWER</p>
+            <div className="winner-trophy" aria-hidden="true">🏆</div>
+            <p
+              className="winner-team-name"
+              style={{ color: tColor, textShadow: `0 0 40px ${tColor}80` }}
+            >
+              {winnerInfo.team_name ?? "WINNER"}
+            </p>
+            <p className="winner-sub">QUESTION SOLVED</p>
+          </div>
+
+          {/* Mini leaderboard strip */}
+          <div className="meme-leaderboard-strip">
+            {leaderboard.slice(0, 5).map((team, i) => (
+              <div key={team.id} className="meme-lb-item">
+                <span style={{ color: RANK_COLORS[i] ?? "var(--text-muted)" }}>#{i + 1}</span>
+                <span className="meme-lb-name" style={{ color: team.color ?? "var(--text-primary)" }}>
+                  {team.name}
+                </span>
+                <span className="meme-lb-score">{team.score} RP</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <footer className="arena-footer">
+          <span className="arena-brand">QUANTBID ARENA 2026</span>
+          <span className="arena-footer-dot" />
+          <span className="arena-footer-sub">WINNER</span>
+        </footer>
+      </div>
+    );
+  }
+
+  // WRONG phase — incorrect answer display
+  if (phase === "WRONG") {
+    const tColor = winnerInfo.team_color ?? "#E05555";
+    return (
+      <div className="arena-shell arena-shell--wrong">
+        <div className="ambient-grid" />
+        <div className="math-bg" aria-hidden="true">
+          <span>∫ e^x dx = e^x + C</span>
+          <span>E = mc²</span>
+          <span>∑ (1/n²) = π²/6</span>
+          <span>e^(iπ) + 1 = 0</span>
+        </div>
+
+        <div className="arena-winner-screen">
+          {/* Red pulsing rings */}
+          <div className="winner-rings" aria-hidden="true">
+            <div className="winner-ring winner-ring-1" style={{ borderColor: tColor }} />
+            <div className="winner-ring winner-ring-2" style={{ borderColor: tColor }} />
+            <div className="winner-ring winner-ring-3" style={{ borderColor: tColor }} />
+          </div>
+
+          <div className="winner-content">
+            <p className="winner-eyebrow wrong-eyebrow">INCORRECT ANSWER</p>
+            <div className="winner-trophy wrong-icon" aria-hidden="true">✗</div>
+            <p
+              className="winner-team-name"
+              style={{ color: tColor, textShadow: `0 0 40px ${tColor}60` }}
+            >
+              {winnerInfo.team_name ?? "TEAM"}
+            </p>
+            <p className="winner-sub">QUESTION FAILED</p>
+          </div>
+
+          {/* Mini leaderboard strip */}
+          <div className="meme-leaderboard-strip">
+            {leaderboard.slice(0, 5).map((team, i) => (
+              <div key={team.id} className="meme-lb-item">
+                <span style={{ color: RANK_COLORS[i] ?? "var(--text-muted)" }}>#{i + 1}</span>
+                <span className="meme-lb-name" style={{ color: team.color ?? "var(--text-primary)" }}>
+                  {team.name}
+                </span>
+                <span className="meme-lb-score">{team.score} RP</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <footer className="arena-footer">
+          <span className="arena-brand">QUANTBID ARENA 2026</span>
+          <span className="arena-footer-dot" />
+          <span className="arena-footer-sub">FAILED</span>
+        </footer>
       </div>
     );
   }

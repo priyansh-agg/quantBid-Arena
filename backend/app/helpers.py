@@ -212,6 +212,7 @@ def fetch_full_state() -> dict:
         "phase": _mgr.phase,
         "meme_text": _mgr.meme_text,
         "current_question_id": _mgr.current_question_id,
+        "winner_info": _mgr.winner_info,
     }
 
 

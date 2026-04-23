@@ -11,12 +11,17 @@ const WS_URL = API_BASE.replace(/^http/, "ws") + "/ws/game";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
-export type PhaseType = "QUESTION" | "TRANSITION";
+export type PhaseType = "QUESTION" | "TRANSITION" | "WINNER" | "WRONG";
 
 export type PhaseState = {
   phase: PhaseType;
   meme_text: string;
   current_question_id: number | null;
+  winner_info: {
+    team_name?: string;
+    team_color?: string;
+    question_id?: number;
+  };
 };
 
 // ── Callbacks ─────────────────────────────────────────────
@@ -76,6 +81,7 @@ export function useGameWebSocket(
             phase: msg.phase ?? "QUESTION",
             meme_text: msg.meme_text ?? "",
             current_question_id: msg.current_question_id ?? null,
+            winner_info: msg.winner_info ?? {},
           });
           return;
         }
@@ -96,6 +102,7 @@ export function useGameWebSocket(
               phase: msg.phase ?? "QUESTION",
               meme_text: msg.meme_text ?? "",
               current_question_id: msg.current_question_id ?? null,
+              winner_info: msg.winner_info ?? {},
             });
           }
         }

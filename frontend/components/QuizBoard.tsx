@@ -117,11 +117,9 @@ export default function QuizBoard() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [timerSeconds, setTimerSeconds] = useState(0);
 
-  // New UI states
+  // Sidebar states
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [loadingText, setLoadingText] = useState(MEME_TEXTS[0]);
 
   const selectedQuestion = useMemo(
     () => questions.find((q) => q.id === selectedId) ?? null,
@@ -201,17 +199,11 @@ export default function QuizBoard() {
   useEffect(() => setShowAnswer(false), [selectedId]);
 
   const handleSelectQuestion = (id: number) => {
-    if (id === selectedId || isTransitioning) return;
-    // Local host UI transition (3s cinematic)
-    setIsTransitioning(true);
+    if (id === selectedId) return;
+    setSelectedId(id);
     setLeftSidebarOpen(false);
-    setLoadingText(MEME_TEXTS[Math.floor(Math.random() * MEME_TEXTS.length)]);
-    setTimeout(() => {
-      setSelectedId(id);
-      setIsTransitioning(false);
-    }, 3000);
-    // Pin this question as the arena's single source of truth
-    // (fire-and-forget — the host UI transitions independently)
+    // Pin this question as current on the backend WITHOUT changing arena phase.
+    // Arena only updates when host explicitly clicks "Reveal Question".
     setCurrentQuestion(id).catch(() => {/* non-critical */});
   };
 
@@ -386,16 +378,6 @@ export default function QuizBoard() {
       </header>
 
       <main className="board-grid">
-        {isTransitioning && (
-          <div className="transition-overlay">
-            <div className="spinner" />
-            <p className="meme-text">{loadingText}</p>
-            <div className="progress-bar-container">
-              <div className="progress-bar-fill" />
-            </div>
-          </div>
-        )}
-
         {/* ── Left: Question Palette ── */}
         <aside className={`sidebar sidebar-left ${leftSidebarOpen ? "open" : ""}`}>
           <div className="panel-head">

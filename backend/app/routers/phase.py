@@ -67,12 +67,12 @@ async def set_question_phase() -> dict:
 @router.post("/set-question")
 async def set_current_question(body: SetQuestionBody) -> dict:
     """
-    Host explicitly pins a question as the current one shown on the arena.
-    This is the single source of truth — overrides auto-detection by status.
-    Automatically switches phase to QUESTION.
+    Host pins a question as the current one shown on the arena.
+    This is the single source of truth — but does NOT change the arena phase.
+    Phase only changes when Reveal Question (/api/phase/question) is called.
     """
     manager.set_current_question(body.question_id)
-    manager.set_phase("QUESTION")
+    # Broadcast a lightweight phase message (carries new question id, phase unchanged)
     await manager.broadcast(manager.build_phase_message())
     return {
         "phase": manager.phase,

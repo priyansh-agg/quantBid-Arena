@@ -1856,3 +1856,128 @@ h1, h2, h3, h4 { line-height: 1.3; }
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   WINNER / CELEBRATION SCREEN (Arena View)
+   ═══════════════════════════════════════════════════════════════ */
+
+.arena-shell--winner {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.arena-winner-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 40px;
+  position: relative;
+}
+
+/* Celebration rings — use team color via inline style */
+.winner-rings {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.winner-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid;
+  animation: winnerRingPulse 1.5s ease-out infinite;
+}
+.winner-ring-1 { width: 180px; height: 180px; animation-delay: 0s; }
+.winner-ring-2 { width: 360px; height: 360px; animation-delay: 0.5s; }
+.winner-ring-3 { width: 540px; height: 540px; animation-delay: 1s; }
+
+@keyframes winnerRingPulse {
+  0%   { opacity: 0.6; transform: scale(0.9); }
+  50%  { opacity: 0.3; transform: scale(1.05); }
+  100% { opacity: 0;   transform: scale(1.2); }
+}
+
+/* Winner content block */
+.winner-content {
+  text-align: center;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.winner-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.winner-trophy {
+  font-size: clamp(56px, 8vw, 96px);
+  line-height: 1;
+  filter: drop-shadow(0 0 20px rgba(201, 168, 87, 0.6));
+  animation: trophyBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes trophyBounce {
+  0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.winner-team-name {
+  font-family: var(--font-mono);
+  font-size: clamp(32px, 6vw, 72px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  animation: glowPulse 1.5s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { filter: brightness(1); }
+  50%       { filter: brightness(1.3); }
+}
+.winner-sub {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WRONG ANSWER SCREEN (Arena View)
+   ═══════════════════════════════════════════════════════════════ */
+
+.arena-shell--wrong {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Override eyebrow color for wrong screen */
+.wrong-eyebrow {
+  color: #E05555 !important;
+  letter-spacing: 0.3em;
+}
+
+/* ✗ icon — styled like the trophy but red */
+.wrong-icon {
+  font-size: clamp(56px, 8vw, 96px);
+  line-height: 1;
+  color: #E05555;
+  filter: drop-shadow(0 0 20px rgba(224, 85, 85, 0.6));
+  animation: wrongShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  font-style: normal;
+  font-weight: 900;
+}
+
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-8px) rotate(-4deg); }
+  30%       { transform: translateX(8px) rotate(4deg); }
+  45%       { transform: translateX(-6px) rotate(-2deg); }
+  60%       { transform: translateX(6px) rotate(2deg); }
+  75%       { transform: translateX(-3px); }
+}

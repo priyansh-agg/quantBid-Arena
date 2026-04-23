@@ -32,19 +32,20 @@ MEME_TEXTS: list[str] = [
     "DECRYPTING MATHEMATICAL VECTORS",
 ]
 
-PhaseType = Literal["QUESTION", "TRANSITION"]
+PhaseType = Literal["QUESTION", "TRANSITION", "WINNER", "WRONG"]
 
 
 class ConnectionManager:
     def __init__(self) -> None:
         self.active_connections: list[WebSocket] = []
 
-        # ── In-memory phase state (host-controlled) ──────────
+        # In-memory phase state (host-controlled)
         self.phase: PhaseType = "QUESTION"
         self.meme_text: str = random.choice(MEME_TEXTS)
         # Single source of truth: which question the arena currently displays.
-        # None = host hasn't explicitly selected one yet (arena auto-picks first active).
         self.current_question_id: Optional[int] = None
+        # Winner info (populated when phase = WINNER)
+        self.winner_info: dict = {}  # {"team_name": str, "team_color": str, "question_id": int}
 
     # ── Connection management ────────────────────────────────
 
@@ -64,6 +65,7 @@ class ConnectionManager:
         message.setdefault("phase", self.phase)
         message.setdefault("meme_text", self.meme_text)
         message.setdefault("current_question_id", self.current_question_id)
+        message.setdefault("winner_info", self.winner_info)
 
         data = json.dumps(message, default=str)
         dead: list[WebSocket] = []
@@ -82,8 +84,27 @@ class ConnectionManager:
         if meme_text:
             self.meme_text = meme_text
         elif phase == "TRANSITION":
-            # Pick a fresh random meme text on each transition
             self.meme_text = random.choice(MEME_TEXTS)
+        if phase not in ("WINNER", "WRONG"):
+            self.winner_info = {}
+
+    def set_winner(self, team_name: str, team_color: str, question_id: int) -> None:
+        """Trigger the winner celebration screen."""
+        self.phase = "WINNER"
+        self.winner_info = {
+            "team_name": team_name,
+            "team_color": team_color,
+            "question_id": question_id,
+        }
+
+    def set_wrong(self, team_name: str, team_color: str, question_id: int) -> None:
+        """Trigger the wrong-answer display screen."""
+        self.phase = "WRONG"
+        self.winner_info = {
+            "team_name": team_name,
+            "team_color": team_color,
+            "question_id": question_id,
+        }
 
     def set_current_question(self, question_id: Optional[int]) -> None:
         """Host explicitly sets which question is live on the arena."""
@@ -96,6 +117,7 @@ class ConnectionManager:
             "phase": self.phase,
             "meme_text": self.meme_text,
             "current_question_id": self.current_question_id,
+            "winner_info": self.winner_info,
         }
 
 
