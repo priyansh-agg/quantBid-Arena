@@ -21,12 +21,21 @@ import { useGameWebSocket } from "@/lib/websocket";
 import type { Bid, GameState, PowerCard, Question, QuestionStatus, Team } from "@/types";
 import AdminControls from "@/components/AdminControls";
 import BiddingPanel from "@/components/BiddingPanel";
-import ParticlesBackdrop from "@/components/ParticlesBackdrop";
 import PowerCardPanel from "@/components/PowerCardPanel";
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────
+
+const MEME_TEXTS = [
+  "SYSTEM_PROCESSING_INTELLIGENCE",
+  "INITIALIZING_QUANTUM_HEURISTICS",
+  "COMPUTING_PROBABILITY_MATRIX",
+  "ESTABLISHING_NEURAL_UPLINK",
+  "DECRYPTING_MATHEMATICAL_VECTORS",
+  "CALIBRATING_ARENA_VARIABLES",
+  "AWAITING_ELITE_INPUT"
+];
 
 function formatTime(s: number): string {
   const v = Math.max(0, Math.floor(s));
@@ -105,6 +114,12 @@ export default function QuizBoard() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [timerSeconds, setTimerSeconds] = useState(0);
 
+  // New UI states
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [loadingText, setLoadingText] = useState(MEME_TEXTS[0]);
+
   const selectedQuestion = useMemo(
     () => questions.find((q) => q.id === selectedId) ?? null,
     [questions, selectedId]
@@ -144,6 +159,17 @@ export default function QuizBoard() {
     });
   }, []);
 
+  // ── Keyboard Shortcuts ──────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      if (e.key === "[") setLeftSidebarOpen((p) => !p);
+      if (e.key === "]") setRightSidebarOpen((p) => !p);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const connectionStatus = useGameWebSocket(handleState);
 
   // ── Live timer ──────────────────────────────────────────
@@ -164,6 +190,17 @@ export default function QuizBoard() {
   }, [selectedQuestion]);
 
   useEffect(() => setShowAnswer(false), [selectedId]);
+
+  const handleSelectQuestion = (id: number) => {
+    if (id === selectedId || isTransitioning) return;
+    setIsTransitioning(true);
+    setLeftSidebarOpen(false); // Close sidebar for clean transition
+    setLoadingText(MEME_TEXTS[Math.floor(Math.random() * MEME_TEXTS.length)]);
+    setTimeout(() => {
+      setSelectedId(id);
+      setIsTransitioning(false);
+    }, 3000);
+  };
 
   const handleReset = async () => {
     const confirmed = window.confirm(
@@ -238,15 +275,33 @@ export default function QuizBoard() {
 
   return (
     <div className="app-shell">
-      <ParticlesBackdrop />
       <div className="ambient-grid" />
+      <div className="math-bg" aria-hidden="true">
+        <span>∫ e^x dx = e^x + C</span>
+        <span>E = mc²</span>
+        <span>∑ (1/n²) = π²/6</span>
+        <span>e^(iπ) + 1 = 0</span>
+        <span>∇ × B = μ₀J + μ₀ε₀(∂E/∂t)</span>
+        <span>f(x) = a₀/2 + ∑(aₙcos(nx) + bₙsin(nx))</span>
+      </div>
 
       {/* Header */}
       <header className="app-header">
-        <div className="header-left">
-          <span className="header-eyebrow">Live Control Room</span>
-          <h1>QuantBid Arena</h1>
-          <p className="header-sub">Real-time auction engine · Competitive mathematics platform</p>
+        <div className="header-left" style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+          <button
+            className="btn-toggle-sidebar"
+            onClick={() => setLeftSidebarOpen((p) => !p)}
+            title="Toggle Questions ([)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div>
+            <span className="header-eyebrow">Live Control Room</span>
+            <h1>QuantBid Arena</h1>
+            <p className="header-sub">Real-time auction engine · Competitive mathematics platform</p>
+          </div>
         </div>
         <div className="header-right">
           <button
@@ -275,12 +330,32 @@ export default function QuizBoard() {
                 : "Disconnected"}
             </span>
           </div>
+          <button
+            className="btn-toggle-sidebar"
+            onClick={() => setRightSidebarOpen((p) => !p)}
+            title="Toggle Leaderboard (])"
+            style={{ marginLeft: "4px" }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18l6-6-6-6M15 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
       </header>
 
       <main className="board-grid">
+        {isTransitioning && (
+          <div className="transition-overlay">
+            <div className="spinner" />
+            <p className="meme-text">{loadingText}</p>
+            <div className="progress-bar-container">
+              <div className="progress-bar-fill" />
+            </div>
+          </div>
+        )}
+
         {/* ── Left: Question Palette ── */}
-        <aside className="panel left-panel">
+        <aside className={`sidebar sidebar-left ${leftSidebarOpen ? "open" : ""}`}>
           <div className="panel-head">
             <h2>Questions</h2>
             <span className="panel-meta">{questions.length} total</span>
@@ -290,7 +365,7 @@ export default function QuizBoard() {
               <button
                 key={q.id}
                 type="button"
-                onClick={() => setSelectedId(q.id)}
+                onClick={() => handleSelectQuestion(q.id)}
                 className={pillClass(q, selectedId)}
               >
                 <span className="pill-id">Q{q.id}</span>
@@ -465,7 +540,7 @@ export default function QuizBoard() {
         </section>
 
         {/* ── Right: Leaderboard ── */}
-        <aside className="panel right-panel">
+        <aside className={`sidebar sidebar-right ${rightSidebarOpen ? "open" : ""}`}>
           <div className="panel-head">
             <h2>Leaderboard</h2>
             <span className="panel-meta">{teams.length} teams</span>
