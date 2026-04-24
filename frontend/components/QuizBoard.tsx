@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import 'katex/dist/katex.min.css';
+import renderMathInElement from 'katex/contrib/auto-render';
 
 import {
   closeQuestion,
@@ -197,6 +199,20 @@ export default function QuizBoard() {
   }, [selectedQuestion]);
 
   useEffect(() => setShowAnswer(false), [selectedId]);
+
+  // Auto-render KaTeX when the selected question changes
+  useEffect(() => {
+    const el = document.getElementById("host-question-container");
+    if (el) {
+      renderMathInElement(el, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false }
+        ],
+        throwOnError: false
+      });
+    }
+  }, [selectedQuestion?.question_text, selectedQuestion?.options]);
 
   const handleSelectQuestion = (id: number) => {
     if (id === selectedId) return;
@@ -441,7 +457,7 @@ export default function QuizBoard() {
               </div>
 
               {/* Question text */}
-              <article className="question-card">
+              <article className="question-card" id="host-question-container">
                 <h3>{selectedQuestion.question_text}</h3>
                 {selectedQuestion.options && selectedQuestion.options.length > 0 ? (
                   <ol className="option-list">

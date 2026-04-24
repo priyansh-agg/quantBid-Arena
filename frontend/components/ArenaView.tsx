@@ -1,8 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useGameWebSocket, type PhaseState } from "@/lib/websocket";
 import type { Bid, GameState, PowerCard, Question, QuestionStatus, Team } from "@/types";
+import 'katex/dist/katex.min.css';
+import renderMathInElement from 'katex/contrib/auto-render';
+import DoorTransition from "./DoorTransition";
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -74,6 +78,8 @@ export default function ArenaView() {
   const [memeText, setMemeText] = useState("INITIALIZING ARENA");
   const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(null);
   const [winnerInfo, setWinnerInfo] = useState<{ team_name?: string; team_color?: string; question_id?: number }>({});
+  const [doorOpen, setDoorOpen] = useState(true);
+  const router = useRouter();
 
   // Single source of truth: use server-pinned question id.
   // Fallback to status-scanning only when host hasn't pinned one yet.
@@ -137,6 +143,27 @@ export default function ArenaView() {
   const assignedTeam = activeQuestion
     ? teams.find((t) => t.id === activeQuestion.assigned_team_id)
     : null;
+
+  const handleLeaderboardClick = () => {
+    setDoorOpen(false);
+    setTimeout(() => {
+      router.push("/leaderboard");
+    }, 800);
+  };
+
+  // Auto-render KaTeX when the active question changes
+  useEffect(() => {
+    const el = document.getElementById("arena-question-container");
+    if (el) {
+      renderMathInElement(el, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false }
+        ],
+        throwOnError: false
+      });
+    }
+  }, [activeQuestion?.question_text, activeQuestion?.options, phase]);
 
   // ── Render ───────────────────────────────────────────────
 
@@ -332,43 +359,7 @@ export default function ArenaView() {
         <span>f(x) = a₀/2 + ∑(aₙcos(nx) + bₙsin(nx))</span>
       </div>
 
-      <div className="arena-grid">
-        {/* ── LEFT: Leaderboard ── */}
-        <aside className="arena-leaderboard">
-          <div className="arena-panel-head">
-            <span className="arena-panel-label">LEADERBOARD</span>
-            <span className="arena-panel-sub">{teams.length} TEAMS</span>
-          </div>
-          <div className="arena-lb-list">
-            {leaderboard.map((team, i) => (
-              <div
-                key={team.id}
-                className={`arena-lb-row ${i === 0 ? "arena-lb-gold" : i === 1 ? "arena-lb-silver" : i === 2 ? "arena-lb-bronze" : ""}`}
-              >
-                <span
-                  className="arena-lb-rank"
-                  style={{ color: RANK_COLORS[i] ?? "var(--text-muted)" }}
-                >
-                  {i + 1}
-                </span>
-                <div className="arena-lb-info">
-                  <span
-                    className="arena-lb-name"
-                    style={{ color: team.color ?? "var(--text-primary)" }}
-                  >
-                    {team.name}
-                  </span>
-                  <span className="arena-lb-qm">
-                    {team.balance.toLocaleString()} QM
-                  </span>
-                </div>
-                <span className="arena-lb-score">{team.score} RP</span>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* ── CENTER: Question Spotlight ── */}
+      <div className="arena-grid">        {/* ── CENTER: Question Spotlight ── */}
         <main className="arena-center">
           {activeQuestion ? (
             <>
@@ -379,7 +370,12 @@ export default function ArenaView() {
                 <span className="arena-q-id">Q{activeQuestion.id}</span>
               </div>
 
-              <div className="arena-question-block">
+              <div className="arena-meta-row">
+                <span className="arena-chip">{activeQuestion.reward_points} RP</span>
+                <span className="arena-chip">Base {activeQuestion.base_amount} QM</span>
+              </div>
+
+              <div className="arena-question-block" id="arena-question-container">
                 <h1 className="arena-question-text">
                   {activeQuestion.question_text}
                 </h1>
@@ -398,27 +394,8 @@ export default function ArenaView() {
                 )}
               </div>
 
-              {activeQuestion.status === "SOLVING" && assignedTeam && (
-                <div className="arena-solving-bar">
-                  <span className="arena-solving-label">SOLVING →</span>
-                  <span
-                    className="arena-solving-team"
-                    style={{ color: assignedTeam.color ?? "var(--accent)" }}
-                  >
-                    {assignedTeam.name}
-                  </span>
-                  <span className="arena-solving-bid">
-                    {activeQuestion.current_bid_amount?.toLocaleString()} QM
-                  </span>
-                </div>
-              )}
 
-              <div className="arena-meta-row">
-                <span className="arena-chip">{activeQuestion.reward_points} RP</span>
-                <span className="arena-chip">Base {activeQuestion.base_amount} QM</span>
-                {activeQuestion.category && <span className="arena-chip">{activeQuestion.category}</span>}
-                {activeQuestion.difficulty && <span className="arena-chip">{activeQuestion.difficulty}</span>}
-              </div>
+
             </>
           ) : (
             <div className="arena-idle">
@@ -430,6 +407,18 @@ export default function ArenaView() {
 
         {/* ── RIGHT: Timer + Current Bids ── */}
         <aside className="arena-right">
+          {activeQuestion?.status === "SOLVING" && assignedTeam && (
+            <div className="arena-solving-spotlight" style={{ '--team-color': assignedTeam.color ?? "var(--accent)" } as React.CSSProperties}>
+              <p className="arena-panel-label" style={{ color: "var(--team-color)", textShadow: "0 0 10px var(--team-color)" }}>CURRENTLY SOLVING</p>
+              <div className="arena-solving-team-card">
+                <h2 className="solving-team-name">{assignedTeam.name}</h2>
+                <div className="solving-team-bid">
+                  Bid: <strong>{activeQuestion.current_bid_amount?.toLocaleString()} QM</strong>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeQuestion && ["BIDDING", "SOLVING"].includes(activeQuestion.status) && (
             <div className="arena-timer-block">
               <p className="arena-timer-label">
@@ -491,6 +480,9 @@ export default function ArenaView() {
               })}
             </div>
           )}
+          <button onClick={handleLeaderboardClick} className="btn-samurai-link">
+            ⛩️ VIEW STANDINGS
+          </button>
         </aside>
       </div>
 
@@ -499,6 +491,8 @@ export default function ArenaView() {
         <span className="arena-footer-dot" />
         <span className="arena-footer-sub">LIVE</span>
       </footer>
+
+      <DoorTransition isOpen={doorOpen} />
     </div>
   );
 }
