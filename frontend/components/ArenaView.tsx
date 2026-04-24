@@ -170,7 +170,7 @@ export default function ArenaView() {
   if (loading) {
     return (
       <div className="arena-shell">
-        <div className="ambient-grid" />
+        <div className="lb-kyoto-bg"></div>
         <div className="arena-loading">
           <div className="spinner" />
           <p className="meme-text">CONNECTING TO ARENA_</p>
@@ -184,13 +184,7 @@ export default function ArenaView() {
     const tColor = winnerInfo.team_color ?? "#C9A857";
     return (
       <div className="arena-shell arena-shell--winner">
-        <div className="ambient-grid" />
-        <div className="math-bg" aria-hidden="true">
-          <span>∫ e^x dx = e^x + C</span>
-          <span>E = mc²</span>
-          <span>∑ (1/n²) = π²/6</span>
-          <span>e^(iπ) + 1 = 0</span>
-        </div>
+        <div className="lb-kyoto-bg"></div>
 
         <div className="arena-winner-screen">
           {/* Celebration rings */}
@@ -212,18 +206,7 @@ export default function ArenaView() {
             <p className="winner-sub">QUESTION SOLVED</p>
           </div>
 
-          {/* Mini leaderboard strip */}
-          <div className="meme-leaderboard-strip">
-            {leaderboard.slice(0, 5).map((team, i) => (
-              <div key={team.id} className="meme-lb-item">
-                <span style={{ color: RANK_COLORS[i] ?? "var(--text-muted)" }}>#{i + 1}</span>
-                <span className="meme-lb-name" style={{ color: team.color ?? "var(--text-primary)" }}>
-                  {team.name}
-                </span>
-                <span className="meme-lb-score">{team.score} RP</span>
-              </div>
-            ))}
-          </div>
+
         </div>
 
         <footer className="arena-footer">
@@ -240,13 +223,7 @@ export default function ArenaView() {
     const tColor = winnerInfo.team_color ?? "#E05555";
     return (
       <div className="arena-shell arena-shell--wrong">
-        <div className="ambient-grid" />
-        <div className="math-bg" aria-hidden="true">
-          <span>∫ e^x dx = e^x + C</span>
-          <span>E = mc²</span>
-          <span>∑ (1/n²) = π²/6</span>
-          <span>e^(iπ) + 1 = 0</span>
-        </div>
+        <div className="lb-kyoto-bg"></div>
 
         <div className="arena-winner-screen">
           {/* Red pulsing rings */}
@@ -268,18 +245,7 @@ export default function ArenaView() {
             <p className="winner-sub">QUESTION FAILED</p>
           </div>
 
-          {/* Mini leaderboard strip */}
-          <div className="meme-leaderboard-strip">
-            {leaderboard.slice(0, 5).map((team, i) => (
-              <div key={team.id} className="meme-lb-item">
-                <span style={{ color: RANK_COLORS[i] ?? "var(--text-muted)" }}>#{i + 1}</span>
-                <span className="meme-lb-name" style={{ color: team.color ?? "var(--text-primary)" }}>
-                  {team.name}
-                </span>
-                <span className="meme-lb-score">{team.score} RP</span>
-              </div>
-            ))}
-          </div>
+
         </div>
 
         <footer className="arena-footer">
@@ -295,15 +261,7 @@ export default function ArenaView() {
   if (phase === "TRANSITION") {
     return (
       <div className="arena-shell arena-shell--transition">
-        <div className="ambient-grid" />
-        <div className="math-bg" aria-hidden="true">
-          <span>∫ e^x dx = e^x + C</span>
-          <span>E = mc²</span>
-          <span>∑ (1/n²) = π²/6</span>
-          <span>e^(iπ) + 1 = 0</span>
-          <span>∇ × B = μ₀J + μ₀ε₀(∂E/∂t)</span>
-          <span>f(x) = a₀/2 + ∑(aₙcos(nx) + bₙsin(nx))</span>
-        </div>
+        <div className="lb-kyoto-bg"></div>
 
         <div className="arena-meme-screen">
           {/* Animated concentric rings */}
@@ -319,22 +277,6 @@ export default function ArenaView() {
             <p className="meme-sublabel">Host is preparing the next question</p>
           </div>
 
-          <div className="meme-leaderboard-strip">
-            {leaderboard.slice(0, 5).map((team, i) => (
-              <div key={team.id} className="meme-lb-item">
-                <span style={{ color: RANK_COLORS[i] ?? "var(--text-muted)" }}>
-                  #{i + 1}
-                </span>
-                <span
-                  className="meme-lb-name"
-                  style={{ color: team.color ?? "var(--text-primary)" }}
-                >
-                  {team.name}
-                </span>
-                <span className="meme-lb-score">{team.score} RP</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         <footer className="arena-footer">
@@ -349,15 +291,7 @@ export default function ArenaView() {
   // QUESTION phase — show the current question
   return (
     <div className="arena-shell">
-      <div className="ambient-grid" />
-      <div className="math-bg" aria-hidden="true">
-        <span>∫ e^x dx = e^x + C</span>
-        <span>E = mc²</span>
-        <span>∑ (1/n²) = π²/6</span>
-        <span>e^(iπ) + 1 = 0</span>
-        <span>∇ × B = μ₀J + μ₀ε₀(∂E/∂t)</span>
-        <span>f(x) = a₀/2 + ∑(aₙcos(nx) + bₙsin(nx))</span>
-      </div>
+      <div className="lb-kyoto-bg"></div>
 
       <div className="arena-grid">        {/* ── CENTER: Question Spotlight ── */}
         <main className="arena-center">
@@ -370,12 +304,11 @@ export default function ArenaView() {
                 <span className="arena-q-id">Q{activeQuestion.id}</span>
               </div>
 
-              <div className="arena-meta-row">
-                <span className="arena-chip">{activeQuestion.reward_points} RP</span>
-                <span className="arena-chip">Base {activeQuestion.base_amount} QM</span>
-              </div>
-
               <div className="arena-question-block" id="arena-question-container">
+                <div className="arena-meta-row" style={{ marginBottom: "24px", justifyContent: "flex-start", gap: "16px", paddingBottom: "16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <span className="arena-chip arena-chip-rp">{activeQuestion.reward_points} RP</span>
+                  <span className="arena-chip arena-chip-qm">Base {activeQuestion.base_amount} QM</span>
+                </div>
                 <h1 className="arena-question-text">
                   {activeQuestion.question_text}
                 </h1>
@@ -408,7 +341,7 @@ export default function ArenaView() {
         {/* ── RIGHT: Timer + Current Bids ── */}
         <aside className="arena-right">
           {activeQuestion?.status === "SOLVING" && assignedTeam && (
-            <div className="arena-solving-spotlight" style={{ '--team-color': assignedTeam.color ?? "var(--accent)" } as React.CSSProperties}>
+            <div className="arena-solving-spotlight" style={{ '--team-color': assignedTeam.color ?? "var(--accent)", transform: 'scale(1.02)' } as React.CSSProperties}>
               <p className="arena-panel-label" style={{ color: "var(--team-color)", textShadow: "0 0 10px var(--team-color)" }}>CURRENTLY SOLVING</p>
               <div className="arena-solving-team-card">
                 <h2 className="solving-team-name">{assignedTeam.name}</h2>
@@ -418,6 +351,10 @@ export default function ArenaView() {
               </div>
             </div>
           )}
+
+          <button onClick={handleLeaderboardClick} className="btn-samurai-link">
+            ⛩️ VIEW STANDINGS
+          </button>
 
           {activeQuestion && ["BIDDING", "SOLVING"].includes(activeQuestion.status) && (
             <div className="arena-timer-block">
@@ -480,9 +417,6 @@ export default function ArenaView() {
               })}
             </div>
           )}
-          <button onClick={handleLeaderboardClick} className="btn-samurai-link">
-            ⛩️ VIEW STANDINGS
-          </button>
         </aside>
       </div>
 

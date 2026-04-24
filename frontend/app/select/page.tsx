@@ -1,126 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import DoorTransition from "@/components/DoorTransition";
 
 export default function SelectPage() {
   const [showModal, setShowModal] = useState(false);
   const [key, setKey] = useState("");
   const [error, setError] = useState("");
+  const [doorOpen, setDoorOpen] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    // Open doors after a tiny delay for mount safety
+    const t = setTimeout(() => setDoorOpen(true), 50);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleHostAccess = () => {
     setShowModal(true);
   };
 
   const handleArenaAccess = () => {
-    router.push("/arena");
+    setDoorOpen(false); // Close doors
+    setTimeout(() => {
+      router.push("/arena");
+    }, 800);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (key.trim() === "2026") {
       sessionStorage.setItem("auth", "true");
-      router.push("/host");
+      setDoorOpen(false); // Close doors
+      setTimeout(() => {
+        router.push("/host");
+      }, 800);
     } else {
-      setError("INVALID KEY. ACCESS DENIED.");
+      setError("INVALID SEAL. ACCESS DENIED.");
     }
   };
 
   return (
-    <div className="landing-container app-shell">
-      <div className="ambient-grid" />
-      <div className="math-bg" aria-hidden="true">
-        <span>∫ e^x dx = e^x + C</span>
-        <span>E = mc²</span>
-        <span>∑ (1/n²) = π²/6</span>
-        <span>e^(iπ) + 1 = 0</span>
-        <span>∇ × B = μ₀J + μ₀ε₀(∂E/∂t)</span>
-        <span>f(x) = a₀/2 + ∑(aₙcos(nx) + bₙsin(nx))</span>
+    <div className="select-shell">
+      {/* Background container */}
+      <div className="select-bg">
+        <div className="select-bg-left"></div>
+        <div className="select-bg-right"></div>
+        <div className="select-katana-slash"></div>
       </div>
 
-      <div className="landing-content">
-        <div className="landing-card" style={{ background: "var(--bg-base)", border: "1px solid var(--border)", boxShadow: "var(--shadow-glow)" }}>
-          <div className="brand-eyebrow" style={{ color: "var(--accent-2)" }}>
-            Secure Access Gate
+      <div className="select-content">
+        <header className="select-header">
+          <h1 className="select-title">CHOOSE YOUR PATH</h1>
+          <p className="select-subtitle">Two Destinies. One Arena.</p>
+        </header>
+
+        <div className="select-cards-container">
+          {/* Participant Card */}
+          <div className="select-path-card path-participant" onClick={handleArenaAccess}>
+            <div className="path-icon">⛩️</div>
+            <h2 className="path-title">THE PARTICIPANT</h2>
+            <p className="path-desc">Step into the arena, prove your worth, and fight for glory.</p>
+            <div className="path-action">ENTER ARENA &rarr;</div>
           </div>
-          <h1
-            className="landing-title"
-            style={{
-              background: "none",
-              WebkitTextFillColor: "var(--text-primary)",
-              color: "var(--text-primary)",
-              letterSpacing: "0.05em",
-            }}
-          >
-            QuantBid Arena 2026
-          </h1>
-          <p
-            className="landing-subtitle"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "13px",
-              textTransform: "uppercase",
-              color: "var(--text-secondary)",
-            }}
-          >
-            System ready. Select your interface.
-          </p>
 
-          <div className="landing-btn-group">
-            {/* Participant view — no auth */}
-            <button className="btn-arena" onClick={handleArenaAccess}>
-              <span className="btn-icon">◉</span>
-              Enter Arena
-              <span className="btn-hint">Participant View</span>
-            </button>
-
-            {/* Host panel — auth gated */}
-            <button className="btn-host" onClick={handleHostAccess}>
-              <span className="btn-icon">⌖</span>
-              Host Panel
-              <span className="btn-hint">Control Room</span>
-            </button>
+          {/* Host Card */}
+          <div className="select-path-card path-host" onClick={handleHostAccess}>
+            <div className="path-icon">🏯</div>
+            <h2 className="path-title">THE SHOGUN</h2>
+            <p className="path-desc">Command the fates, orchestrate the battles, and rule the throne.</p>
+            <div className="path-action">HOST PANEL &rarr;</div>
           </div>
         </div>
       </div>
 
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>HOST AUTHENTICATION</h2>
-            <p>Enter the control room access key to proceed.</p>
+        <div className="modal-overlay samurai-modal">
+          <div className="modal-content samurai-modal-content">
+            <h2 className="samurai-modal-title">SHOGUN AUTHENTICATION</h2>
+            <p className="samurai-modal-desc">Present your royal seal to proceed.</p>
             <form onSubmit={handleSubmit}>
               <input
                 type="password"
-                placeholder="ENTER SYSTEM KEY_"
+                placeholder="ENTER SEAL_"
                 value={key}
                 onChange={(e) => {
                   setKey(e.target.value);
                   setError("");
                 }}
                 autoFocus
-                className="modal-input"
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                }}
+                className="modal-input samurai-input"
               />
               {error && (
-                <p className="modal-error" style={{ color: "var(--accent-2)" }}>
+                <p className="modal-error samurai-error">
                   {error}
                 </p>
               )}
-              <div className="modal-actions">
+              <div className="modal-actions samurai-actions">
                 <button
                   type="button"
-                  className="btn-cancel"
+                  className="btn-samurai-cancel"
                   onClick={() => { setShowModal(false); setKey(""); setError(""); }}
                 >
                   ABORT
                 </button>
-                <button type="submit" className="btn-submit">
+                <button type="submit" className="btn-samurai-submit">
                   AUTHENTICATE
                 </button>
               </div>
@@ -128,6 +113,8 @@ export default function SelectPage() {
           </div>
         </div>
       )}
+
+      <DoorTransition isOpen={doorOpen} />
     </div>
   );
 }

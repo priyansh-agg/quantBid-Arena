@@ -1,9 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import DoorTransition from "@/components/DoorTransition";
 
 export default function VideoLandingPage() {
   const router = useRouter();
+  const [doorOpen, setDoorOpen] = useState(true);
+
+  const handleEnter = () => {
+    setDoorOpen(false); // Close the doors
+    setTimeout(() => {
+      router.push("/select");
+    }, 800); // Wait for the transition
+  };
 
   return (
     <div className="video-landing-container">
@@ -22,11 +32,13 @@ export default function VideoLandingPage() {
       <div className="video-landing-overlay">
         <button
           className="btn-enter-arena-premium"
-          onClick={() => router.push("/select")}
+          onClick={handleEnter}
         >
           ENTER ARENA
         </button>
       </div>
+
+      <DoorTransition isOpen={doorOpen} />
     </div>
   );
 }
