@@ -155,11 +155,13 @@ def get_team_or_404(team_id: int) -> dict:
 
 def get_min_increment(current_bid: int) -> int:
     """Return the minimum increment required to outbid `current_bid`."""
-    if current_bid <= 100:
+    if current_bid < 100:
         return 10
-    if current_bid <= 200:
+    if current_bid < 200:
         return 20
-    return 50
+    if current_bid < 1000:
+        return 50
+    return 100
 
 
 # ──────────────────────────────────────────────────────────
